@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"io"
 	"log"
@@ -147,7 +148,41 @@ func (kb *KeyExchangeBody) Parse(r io.Reader) error {
 		return err
 	}
 
+	if err = binary.Read(r, binary.BigEndian, &kb.IsFirstKexPacketFollows); err != nil {
+		return err
+	}
+
+	if err = binary.Read(r, binary.BigEndian, &kb.ReservedByte); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func GenerateKexPacket() ([]byte, error) {
+	packet := make([]byte, 0)
+
+	kexHeader := NewKeyExchangeHeader()
+
+	kexHeader.Message = []byte{SSH_MSG_KEXINIT}
+	kexHeader.Cookie = make([]byte, 16)
+
+	_, err := rand.Read(kexHeader.Cookie)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, kexHeader.Message)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, kexHeader.Cookie)
+	if err != nil {
+		return packet, err
+	}
+
+	return packet, err
 }
 
 func InitKeyExchange(r io.Reader) error {
@@ -179,6 +214,13 @@ func InitKeyExchange(r io.Reader) error {
 	}
 
 	log.Println(kexBody)
+
+	kexPacket, err := GenerateKexPacket()
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(kexPacket))
 
 	return err
 }

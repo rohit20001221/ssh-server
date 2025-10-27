@@ -42,9 +42,7 @@ func main() {
 						break
 					}
 
-					/*
-						Loop to Read commands from the user
-					*/
+					/* Loop to Read commands from the user */
 					ch := make(chan string)
 					<-ch
 				}
