@@ -162,6 +162,7 @@ func (kb *KeyExchangeBody) Parse(r io.Reader) error {
 func GenerateKexPacket() ([]byte, error) {
 	packet := make([]byte, 0)
 
+	/* Header Generation */
 	kexHeader := NewKeyExchangeHeader()
 
 	kexHeader.Message = []byte{SSH_MSG_KEXINIT}
@@ -182,10 +183,230 @@ func GenerateKexPacket() ([]byte, error) {
 		return packet, err
 	}
 
+	/* Body Generation */
+
+	KexAlgorithmsList := []string{
+		"diffie-hellman-group-exchange-sha256",
+		"sntrup761x25519-sha512",
+		"sntrup761x25519-sha512@openssh.com",
+		"mlkem768x25519-sha256",
+		"curve25519-sha256",
+		"curve25519-sha256@libssh.org",
+		"ecdh-sha2-nistp256",
+		"ecdh-sha2-nistp384",
+		"ecdh-sha2-nistp521",
+		"diffie-hellman-group16-sha512",
+		"diffie-hellman-group18-sha512",
+		"diffie-hellman-group14-sha256",
+		"ext-info-c",
+		"kex-strict-c-v00@openssh.com",
+	}
+
+	KexAlgorithms := []byte(strings.Join(KexAlgorithmsList, ","))
+	KexAlgorithmsLength := uint32(len(KexAlgorithms))
+
+	packet, err = binary.Append(packet, binary.BigEndian, KexAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, KexAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	ServerHostKeyAlgorithmsList := []string{
+		"rsa-sha2-256",
+		"ssh-ed25519-cert-v01@openssh.com",
+		"ecdsa-sha2-nistp256-cert-v01@openssh.com",
+		"ecdsa-sha2-nistp384-cert-v01@openssh.com",
+		"ecdsa-sha2-nistp521-cert-v01@openssh.com",
+		"sk-ssh-ed25519-cert-v01@openssh.com",
+		"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com",
+		"rsa-sha2-512-cert-v01@openssh.com",
+		"rsa-sha2-256-cert-v01@openssh.com",
+		"ssh-ed25519",
+		"ecdsa-sha2-nistp256",
+		"ecdsa-sha2-nistp384",
+		"ecdsa-sha2-nistp521",
+		"sk-ssh-ed25519@openssh.com",
+		"sk-ecdsa-sha2-nistp256@openssh.com",
+		"rsa-sha2-512",
+	}
+
+	ServerHostKeyAlgorithms := []byte(strings.Join(ServerHostKeyAlgorithmsList, ","))
+	ServerHostKeyAlgorithmsLength := uint32(len(ServerHostKeyAlgorithms))
+
+	packet, err = binary.Append(packet, binary.BigEndian, ServerHostKeyAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, ServerHostKeyAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	EncryptionAlgorithmsList := []string{
+		"aes256-ctr",
+		"chacha20-poly1305@openssh.com",
+		"aes128-ctr",
+		"aes192-ctr",
+		"aes128-gcm@openssh.com",
+		"aes256-gcm@openssh.com",
+	}
+
+	EncryptionAlgorithms := []byte(strings.Join(EncryptionAlgorithmsList, ","))
+	EncryptionAlgorithmsLength := uint32(len(EncryptionAlgorithms))
+
+	// Client to Server
+	packet, err = binary.Append(packet, binary.BigEndian, EncryptionAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, EncryptionAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	// Server to Client
+	packet, err = binary.Append(packet, binary.BigEndian, EncryptionAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, EncryptionAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	MacAlgorithmsList := []string{
+		"hmac-sha2-256",
+		"umac-64-etm@openssh.com",
+		"umac-128-etm@openssh.com",
+		"hmac-sha2-256-etm@openssh.com",
+		"hmac-sha2-512-etm@openssh.com",
+		"hmac-sha1-etm@openssh.com",
+		"umac-64@openssh.com",
+		"umac-128@openssh.com",
+		"hmac-sha2-512",
+		"hmac-sha1",
+	}
+
+	MacAlgorithms := []byte(strings.Join(MacAlgorithmsList, ","))
+	MacAlgorithmsLength := uint32(len(MacAlgorithms))
+
+	// client to server
+	packet, err = binary.Append(packet, binary.BigEndian, MacAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, MacAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	// server to client
+	packet, err = binary.Append(packet, binary.BigEndian, MacAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, MacAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	CompressionAlgorithmsList := []string{
+		"none",
+		"zlib@openssh.com",
+	}
+
+	CompressionAlgorithms := []byte(strings.Join(CompressionAlgorithmsList, ","))
+	CompressionAlgorithmsLength := uint32(len(CompressionAlgorithms))
+
+	// client to server
+	packet, err = binary.Append(packet, binary.BigEndian, CompressionAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, CompressionAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	// server to client
+	packet, err = binary.Append(packet, binary.BigEndian, CompressionAlgorithmsLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, CompressionAlgorithms)
+	if err != nil {
+		return packet, err
+	}
+
+	LanguagesList := []string{""}
+	Languages := []byte(strings.Join(LanguagesList, ","))
+	LanguagesLength := uint32(len(Languages))
+
+	// client to server
+	packet, err = binary.Append(packet, binary.BigEndian, LanguagesLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, Languages)
+	if err != nil {
+		return packet, err
+	}
+
+	// server to client
+	packet, err = binary.Append(packet, binary.BigEndian, LanguagesLength)
+	if err != nil {
+		return packet, err
+	}
+
+	packet, err = binary.Append(packet, binary.BigEndian, Languages)
+	if err != nil {
+		return packet, err
+	}
+
+	// packet follow
+	packet, err = binary.Append(packet, binary.BigEndian, false)
+	if err != nil {
+		return packet, err
+	}
+
+	// reserved bit
+	packet, err = binary.Append(packet, binary.BigEndian, uint32(0))
+	if err != nil {
+		return packet, err
+	}
+
+	/* Add Padding if nessary */
+	BLOCK_SIZE := 16
+	PaddingRequired := uint32(len(packet) % BLOCK_SIZE)
+
+	if PaddingRequired > 0 {
+		for range PaddingRequired {
+			packet = append(packet, byte(0))
+		}
+	}
+
+	packet = append([]byte{byte(PaddingRequired)}, packet...)
+	PacketLength := len(packet)
+	packet = append([]byte{byte(PacketLength)}, packet...)
+
+	log.Println("[x] length of kex packet from server:", len(packet), len(packet)%BLOCK_SIZE)
+
 	return packet, err
 }
 
-func InitKeyExchange(r io.Reader) error {
+func InitKeyExchange(r io.Reader, w io.Writer) error {
 	packet := NewBinaryPacket()
 
 	err := packet.Parse(r, true) // skip the mac in initial request
@@ -220,7 +441,7 @@ func InitKeyExchange(r io.Reader) error {
 		return err
 	}
 
-	log.Println(string(kexPacket))
+	_, err = w.Write(kexPacket)
 
 	return err
 }

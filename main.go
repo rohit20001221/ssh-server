@@ -37,10 +37,15 @@ func main() {
 						break
 					}
 
-					if err := core.InitKeyExchange(reader); err != nil {
+					if err := core.InitKeyExchange(reader, conn); err != nil {
 						log.Println("[x] error:", err)
 						break
 					}
+
+					data := make([]byte, 35000)
+					reader.Read(data)
+
+					log.Println(string(data))
 
 					/* Loop to Read commands from the user */
 					ch := make(chan string)
