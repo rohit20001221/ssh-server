@@ -37,14 +37,14 @@ func NewBinaryPacket() *BinaryPacket {
 			PaddingLength: 0,
 		},
 		Body: &BinaryPacketBody{
-			Payload:       []byte{},
-			RandomPadding: []byte{},
+			Payload:       make([]byte, 0),
+			RandomPadding: make([]byte, 0),
 		},
 		MacHeader: &BinaryPacketMacHeader{
 			MacLength: 0,
 		},
 		MacBody: &BinaryPacketMacBody{
-			Mac: []byte{},
+			Mac: make([]byte, 0),
 		},
 	}
 }
@@ -92,7 +92,11 @@ func (packet *BinaryPacket) ParseMacBody(r io.Reader) error {
 	return nil
 }
 
-func (packet *BinaryPacket) Parse(r io.Reader, skipMac bool) error {
+type BinaryPacketDecodeOptions struct {
+	SkipMac bool
+}
+
+func (packet *BinaryPacket) Decode(r io.Reader, options *BinaryPacketDecodeOptions) error {
 	err := packet.Header.Parse(r)
 	if err != nil {
 		return err
@@ -103,7 +107,7 @@ func (packet *BinaryPacket) Parse(r io.Reader, skipMac bool) error {
 		return err
 	}
 
-	if !skipMac {
+	if options != nil && !options.SkipMac {
 		err := packet.MacHeader.Parse(r)
 		if err != nil {
 			return err
@@ -113,6 +117,36 @@ func (packet *BinaryPacket) Parse(r io.Reader, skipMac bool) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (packet *BinaryPacket) Encode(w io.Writer) error {
+	var err error
+	err = binary.Write(w, binary.BigEndian, packet.Header.PacketLength)
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, binary.BigEndian, packet.Header.PaddingLength)
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, binary.BigEndian, packet.Body.Payload)
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, binary.BigEndian, packet.Body.RandomPadding)
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, binary.BigEndian, packet.MacBody.Mac)
+	if err != nil {
+		return err
 	}
 
 	return nil
