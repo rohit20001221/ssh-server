@@ -1,16 +1,14 @@
 package core
 
-import (
-	"io"
-)
+import "log"
 
-func InitKeyExchange(r io.Reader, w io.Writer) error {
-	packet := NewBinaryPacket()
-
-	err := packet.Decode(r, nil)
+func (s *SSH) InitKeyExchange() error {
+	packet, err := s.Read()
 	if err != nil {
 		return err
 	}
 
-	return err
+	log.Println(packet)
+
+	return nil
 }

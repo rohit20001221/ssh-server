@@ -1,13 +1,12 @@
 package core
 
 import (
-	"io"
 	"log"
 )
 
-func InitializeConnection(reader io.Reader) error {
+func (s *SSH) InitializeConnection() error {
 	buf := make([]byte, 1024)
-	_, err := reader.Read(buf)
+	_, err := s.Reader.Read(buf)
 
 	if err == nil {
 		log.Print(string(buf))

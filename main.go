@@ -26,18 +26,20 @@ func main() {
 				reader := bufio.NewReader(conn)
 				writer := conn
 
+				ssh := core.NewSSH(reader, writer)
+
 				for {
-					if err := core.InitializeConnection(reader); err != nil {
+					if err := ssh.InitializeConnection(); err != nil {
 						log.Println("[x] error:", err)
 						break
 					}
 
-					if _, err := core.ExchangeProtocolVersion(writer); err != nil {
+					if _, err := ssh.ExchangeProtocolVersion(); err != nil {
 						log.Println("[x] error:", err)
 						break
 					}
 
-					if err := core.InitKeyExchange(reader, conn); err != nil {
+					if err := ssh.InitKeyExchange(); err != nil {
 						log.Println("[x] error:", err)
 						break
 					}
